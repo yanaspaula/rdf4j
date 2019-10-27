@@ -29,8 +29,9 @@ public class Temp {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		SimpleValueFactory vf = SimpleValueFactory.getInstance();
 		ArrayList<Statement> statements1 = new ArrayList<>(
-			Arrays.asList(vf.createStatement(RDFS.RESOURCE, RDF.TYPE, RDFS.RESOURCE)));
-		SailRepository sail = new SailRepository(new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), statements1, new ArrayList<>()));
+				Arrays.asList(vf.createStatement(RDFS.RESOURCE, RDF.TYPE, RDFS.RESOURCE)));
+		SailRepository sail = new SailRepository(
+				new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), statements1, new ArrayList<>()));
 		sail.initialize();
 
 		try (SailRepositoryConnection connection = sail.getConnection()) {
