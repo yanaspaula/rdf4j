@@ -10,10 +10,8 @@ package org.eclipse.rdf4j.sail.readonly;
 
 import org.eclipse.rdf4j.IsolationLevel;
 import org.eclipse.rdf4j.IsolationLevels;
-import org.eclipse.rdf4j.common.iteration.CloseableIteration;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategyFactory;
 import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedServiceResolver;
@@ -75,4 +73,5 @@ public class ReadOnlyConnection extends SailSourceConnection {
 	public void begin(IsolationLevel level) throws SailException {
 		super.begin(IsolationLevels.NONE);
 	}
+
 }

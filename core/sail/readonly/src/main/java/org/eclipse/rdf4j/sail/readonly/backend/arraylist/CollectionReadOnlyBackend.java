@@ -27,8 +27,4 @@ public class CollectionReadOnlyBackend implements ReadOnlyBackendInterface {
 
 	}
 
-	@Override
-	public void flush() {
-
-	}
 }

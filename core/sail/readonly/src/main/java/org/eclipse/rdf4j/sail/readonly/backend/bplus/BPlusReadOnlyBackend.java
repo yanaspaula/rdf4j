@@ -138,11 +138,6 @@ public class BPlusReadOnlyBackend implements ReadOnlyBackendInterface {
 
 	}
 
-	@Override
-	public void flush() {
-		// no-op
-	}
-
 }
 
 class CloseableIterationOverIterator implements CloseableIteration<Statement, SailException> {

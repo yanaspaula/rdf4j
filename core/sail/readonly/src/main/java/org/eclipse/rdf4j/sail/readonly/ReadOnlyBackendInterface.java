@@ -28,8 +28,6 @@ public interface ReadOnlyBackendInterface {
 		Value object,
 		Resource... context);
 
-	void flush();
-
 //	protected boolean containsContext(Resource[] context, Resource context1) {
 //		for (Resource resource : context) {
 //			if (resource == null && context1 == null) {

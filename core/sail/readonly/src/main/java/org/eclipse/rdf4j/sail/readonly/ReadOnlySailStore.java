@@ -66,4 +66,6 @@ public class ReadOnlySailStore implements SailStore {
 	public SailSource getInferredSailSource() {
 		return sailSourceInferred;
 	}
+
+
 }

@@ -195,7 +195,8 @@ public class ReadOnlySailSource implements SailSource {
 
 	@Override
 	public void flush() throws SailException {
-		dataStructure.flush();
 	}
+
+
 
 }
