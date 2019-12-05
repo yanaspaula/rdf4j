@@ -8,70 +8,13 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.readonly;
 
-import org.eclipse.rdf4j.IsolationLevel;
-import org.eclipse.rdf4j.IsolationLevels;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategyFactory;
-import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedServiceResolver;
-import org.eclipse.rdf4j.sail.SailException;
-import org.eclipse.rdf4j.sail.UnknownSailTransactionStateException;
-import org.eclipse.rdf4j.sail.base.SailSourceConnection;
-import org.eclipse.rdf4j.sail.base.SailStore;
+import org.eclipse.rdf4j.sail.extensiblestore.ExtensibleStoreConnection;
 
 /**
  * @author Håvard Mikkelsen Ottestad
  */
-public class ReadOnlyConnection extends SailSourceConnection {
-	ReadOnlyStore sail;
-
-	protected ReadOnlyConnection(ReadOnlyStore sail, SailStore store, FederatedServiceResolver resolver) {
-		super(sail, store, resolver);
-		this.sail = sail;
+public class ReadOnlyConnection extends ExtensibleStoreConnection<ReadOnlyStore> {
+	protected ReadOnlyConnection(ReadOnlyStore sail) {
+		super(sail);
 	}
-
-	protected ReadOnlyConnection(ReadOnlyStore sail, SailStore store,
-								 EvaluationStrategyFactory evalStratFactory) {
-		super(sail, store, evalStratFactory);
-		this.sail = sail;
-	}
-
-
-	public ReadOnlyStore getSail() {
-		return sail;
-	}
-
-
-	@Override
-	public boolean isActive() throws UnknownSailTransactionStateException {
-		return true;
-	}
-
-	@Override
-	protected void addStatementInternal(Resource resource, IRI iri, Value value, Resource... resources) throws SailException {
-		throw new IllegalStateException("Can not add statements to ReadOnlyConnection");
-	}
-
-	@Override
-	protected void removeStatementsInternal(Resource resource, IRI iri, Value value, Resource... resources) throws SailException {
-		throw new IllegalStateException("Can not remove statements from ReadOnlyConnection");
-
-	}
-
-	@Override
-	protected IsolationLevel getTransactionIsolation() {
-		return IsolationLevels.NONE;
-	}
-
-	@Override
-	public void begin() throws SailException {
-		super.begin(IsolationLevels.NONE);
-	}
-
-	@Override
-	public void begin(IsolationLevel level) throws SailException {
-		super.begin(IsolationLevels.NONE);
-	}
-
 }

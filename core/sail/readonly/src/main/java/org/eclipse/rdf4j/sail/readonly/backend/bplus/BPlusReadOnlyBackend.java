@@ -17,10 +17,11 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.algebra.evaluation.util.ValueComparator;
 import org.eclipse.rdf4j.sail.SailException;
-import org.eclipse.rdf4j.sail.readonly.ReadOnlyBackendInterface;
-
 import org.eclipse.rdf4j.sail.readonly.backend.ComparingIterator;
-import org.eclipse.rdf4j.sail.readonly.backend.bplus.indexes.*;
+import org.eclipse.rdf4j.sail.readonly.backend.ReadOnlyBackend;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.indexes.OPSIndex;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.indexes.PSOIndex;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.indexes.SPOIndex;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,7 +34,7 @@ import java.util.stream.Stream;
 /**
  * @author Håvard Mikkelsen Ottestad
  */
-public class BPlusReadOnlyBackend implements ReadOnlyBackendInterface {
+public class BPlusReadOnlyBackend extends ReadOnlyBackend {
 
 	private final ValueFactory vf = SimpleValueFactory.getInstance();
 
@@ -90,10 +91,9 @@ public class BPlusReadOnlyBackend implements ReadOnlyBackendInterface {
 			return;
 		}
 		List<Statement> statementList;
-		if(statements instanceof List){
+		if (statements instanceof List) {
 			statementList = (List<Statement>) statements;
-		}
-		else {
+		} else {
 			statementList = new ArrayList<>(statements);
 		}
 

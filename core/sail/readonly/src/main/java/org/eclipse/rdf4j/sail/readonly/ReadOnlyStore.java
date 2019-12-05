@@ -11,60 +11,38 @@ package org.eclipse.rdf4j.sail.readonly;
 import org.eclipse.rdf4j.IsolationLevel;
 import org.eclipse.rdf4j.IsolationLevels;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.query.algebra.evaluation.EvaluationStrategyFactory;
-import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedServiceResolver;
-import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedServiceResolverClient;
-import org.eclipse.rdf4j.query.algebra.evaluation.federation.FederatedServiceResolverImpl;
-import org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategyFactory;
 import org.eclipse.rdf4j.sail.NotifyingSailConnection;
 import org.eclipse.rdf4j.sail.SailException;
-import org.eclipse.rdf4j.sail.helpers.AbstractNotifyingSail;
+import org.eclipse.rdf4j.sail.extensiblestore.ExtensibleStore;
+import org.eclipse.rdf4j.sail.extensiblestore.SimpleMemoryNamespaceStore;
+import org.eclipse.rdf4j.sail.readonly.backend.ReadOnlyBackend;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 /**
  * @author Håvard Mikkelsen Ottestad
  */
-public class ReadOnlyStore extends AbstractNotifyingSail implements FederatedServiceResolverClient {
+public class ReadOnlyStore extends ExtensibleStore<ReadOnlyBackend, SimpleMemoryNamespaceStore> {
 
-	private ReadOnlySailStore sailStore;
 
 	public ReadOnlyStore(ReadOnlyBackendFactoryInterface backend, Collection<Statement> statements, Collection<Statement> statementsInferred) {
-		sailStore = new ReadOnlySailStore(backend, statements, statementsInferred);
+		dataStructureInferred = backend.supplyBackend(statementsInferred);
+		dataStructure = backend.supplyBackend(statements);
+		namespaceStore = new SimpleMemoryNamespaceStore();
+
 	}
 
 	public ReadOnlyStore(ReadOnlyBackendFactoryInterface backend, Collection<Statement> statements) {
-		sailStore = new ReadOnlySailStore(backend, statements);
+		dataStructureInferred = backend.supplyBackend(Collections.EMPTY_LIST);
+		dataStructure = backend.supplyBackend(statements);
+		namespaceStore = new SimpleMemoryNamespaceStore();
 	}
 
-
-	@Override
-	public List<IsolationLevel> getSupportedIsolationLevels() {
-		return Arrays.asList(IsolationLevels.NONE, IsolationLevels.READ_COMMITTED);
-	}
-
-	@Override
-	public IsolationLevel getDefaultIsolationLevel() {
-		return IsolationLevels.NONE;
-	}
-
-	@Override
-	public void setFederatedServiceResolver(FederatedServiceResolver resolver) {
-
-	}
-
-	@Override
-	protected void shutDownInternal() throws SailException {
-		sailStore = null;
-	}
 
 	@Override
 	protected NotifyingSailConnection getConnectionInternal() throws SailException {
-		return new ReadOnlyConnection(this, sailStore, getEvaluationStrategyFactory());
+		return new ReadOnlyConnection(this);
 	}
 
 	@Override
@@ -73,37 +51,7 @@ public class ReadOnlyStore extends AbstractNotifyingSail implements FederatedSer
 	}
 
 	@Override
-	public ValueFactory getValueFactory() {
-		return SimpleValueFactory.getInstance();
-	}
-
-	private EvaluationStrategyFactory evalStratFactory;
-
-	public synchronized EvaluationStrategyFactory getEvaluationStrategyFactory() {
-		if (evalStratFactory == null) {
-			evalStratFactory = new StrictEvaluationStrategyFactory(getFederatedServiceResolver());
-		}
-		evalStratFactory.setQuerySolutionCacheThreshold(0);
-		return evalStratFactory;
-	}
-
-	/**
-	 * independent life cycle
-	 */
-	private FederatedServiceResolver serviceResolver;
-
-	/**
-	 * dependent life cycle
-	 */
-	private FederatedServiceResolverImpl dependentServiceResolver;
-
-	public synchronized FederatedServiceResolver getFederatedServiceResolver() {
-		if (serviceResolver == null) {
-			if (dependentServiceResolver == null) {
-				dependentServiceResolver = new FederatedServiceResolverImpl();
-			}
-			setFederatedServiceResolver(dependentServiceResolver);
-		}
-		return serviceResolver;
+	public IsolationLevel getDefaultIsolationLevel() {
+		return IsolationLevels.NONE;
 	}
 }
