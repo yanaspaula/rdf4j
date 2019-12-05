@@ -21,7 +21,7 @@ public class CollectionReadOnlyBackend extends ReadOnlyBackend {
 
 	@Override
 	public CloseableIteration<? extends Statement, SailException> getStatements(Resource subject, IRI predicate,
-																				Value object, Resource... context) {
+			Value object, Resource... context) {
 
 		return new ComparingIterator(list.iterator(), subject, predicate, object, context);
 

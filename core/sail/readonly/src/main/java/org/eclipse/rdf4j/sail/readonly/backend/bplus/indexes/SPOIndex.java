@@ -6,7 +6,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.sail.readonly.backend.bplus.BplusTree;
 import org.eclipse.rdf4j.sail.readonly.backend.bplus.ListIterable;
-import org.eclipse.rdf4j.sail.readonly.backend.bplus.comparators.*;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.comparators.SPOCComparator;
 
 import java.util.ArrayList;
 import java.util.List;

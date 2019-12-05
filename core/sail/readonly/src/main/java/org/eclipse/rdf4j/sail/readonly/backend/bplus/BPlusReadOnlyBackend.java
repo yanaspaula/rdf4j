@@ -114,7 +114,7 @@ public class BPlusReadOnlyBackend extends ReadOnlyBackend {
 																				Value object, Resource... context) {
 		ListIterable iterable;
 
-		if (sPOIndex.isEmpty()) {
+		if (sPOIndex == null || sPOIndex.isEmpty()) {
 			return new CloseableIterationOverIterator(emptyListIterable.iterator());
 		}
 

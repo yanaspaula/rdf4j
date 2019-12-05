@@ -162,7 +162,7 @@ public class BplusTree<E> {
 		return (DataNode) node.getLastNode(find, comparator);
 	}
 
-	class DataNode {
+	public class DataNode {
 		final Object[] datanodes = new Object[NODE_SIZE];
 
 		DataNode next;

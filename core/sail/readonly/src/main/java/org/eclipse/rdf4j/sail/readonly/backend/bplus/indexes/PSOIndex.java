@@ -6,7 +6,8 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.sail.readonly.backend.bplus.BplusTree;
 import org.eclipse.rdf4j.sail.readonly.backend.bplus.ListIterable;
-import org.eclipse.rdf4j.sail.readonly.backend.bplus.comparators.*;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.PartialStatement;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.comparators.PSOCComparator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +26,12 @@ public class PSOIndex {
 	}
 
 	public ListIterable getStatements(Resource subject, IRI predicate, Value object, Resource[] context) {
+
+		BplusTree<Statement>.DataNode firstNode = index
+				.getFirstNode(new PartialStatement(subject, predicate, object, null));
+		BplusTree<Statement>.DataNode lastNode = index
+				.getFirstNode(new PartialStatement(subject, predicate, object, null));
+
 		return null;
 	}
 }
