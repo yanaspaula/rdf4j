@@ -7,8 +7,8 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.federated.endpoint;
 
-import org.eclipse.rdf4j.federated.Config;
 import org.eclipse.rdf4j.federated.EndpointManager;
+import org.eclipse.rdf4j.federated.FederationContext;
 import org.eclipse.rdf4j.federated.endpoint.provider.RepositoryInformation;
 import org.eclipse.rdf4j.federated.evaluation.TripleSource;
 import org.eclipse.rdf4j.federated.evaluation.TripleSourceFactory;
@@ -133,6 +133,7 @@ public abstract class EndpointBase implements Endpoint {
 		return repoInfo.getType();
 	}
 
+	@Override
 	public boolean isInitialized() {
 		return initialized;
 	}
@@ -145,11 +146,11 @@ public abstract class EndpointBase implements Endpoint {
 	}
 
 	@Override
-	public void initialize() throws RepositoryException {
+	public void init(FederationContext federationContext) throws RepositoryException {
 		if (isInitialized())
 			return;
 		Repository repo = getRepository();
-		tripleSource = TripleSourceFactory.tripleSourceFor(this, getType());
+		tripleSource = TripleSourceFactory.tripleSourceFor(this, getType(), federationContext);
 		if (useSingleConnection()) {
 			dependentConn = new ManagedRepositoryConnection(repo, repo.getConnection());
 		}
@@ -164,10 +165,9 @@ public abstract class EndpointBase implements Endpoint {
 	 * </p>
 	 * 
 	 * @return indicator whether a single connection should be used
-	 * @see Config#useSingletonConnectionPerEndpoint()
 	 */
 	protected boolean useSingleConnection() {
-		return Config.getConfig().useSingletonConnectionPerEndpoint();
+		return false;
 	}
 
 	@Override

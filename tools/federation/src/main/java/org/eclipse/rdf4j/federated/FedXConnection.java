@@ -70,17 +70,19 @@ import org.slf4j.LoggerFactory;
 public class FedXConnection extends AbstractSailConnection {
 
 	private static final Logger log = LoggerFactory.getLogger(FedXConnection.class);
-	protected FedX federation;
+	protected final FedX federation;
+	protected final FederationContext federationContext;
 
 	/**
 	 * If set, contains the initialized write strategy. Always access via {@link #getWriteStrategyInternal()}
 	 */
 	private WriteStrategy writeStrategy;
 
-	public FedXConnection(FedX federation)
+	public FedXConnection(FedX federation, FederationContext federationContext)
 			throws SailException {
-		super(new SailBaseDefaultImpl());
+		super(federation);
 		this.federation = federation;
+		this.federationContext = federationContext;
 	}
 
 	@Override
@@ -88,7 +90,7 @@ public class FedXConnection extends AbstractSailConnection {
 			TupleExpr query, Dataset dataset, BindingSet bindings,
 			boolean includeInferred) throws SailException {
 
-		FederationEvalStrategy strategy = FederationManager.getInstance().getStrategy();
+		FederationEvalStrategy strategy = federationContext.getStrategy();
 
 		long start = 0;
 		QueryInfo queryInfo = null;
@@ -97,14 +99,14 @@ public class FedXConnection extends AbstractSailConnection {
 			if (queryString == null)
 				log.warn("Query string is null. Please check your FedX setup.");
 			queryInfo = new QueryInfo(queryString, getOriginalQueryType(bindings),
-					getOriginalMaxExecutionTime(bindings));
+					getOriginalMaxExecutionTime(bindings), federationContext);
 
 			if (log.isDebugEnabled()) {
 				log.debug("Optimization start (Query: " + queryInfo.getQueryID() + ")");
 				start = System.currentTimeMillis();
 			}
 			try {
-				FederationManager.getMonitoringService().monitorQuery(queryInfo);
+				federationContext.getMonitoringService().monitorQuery(queryInfo);
 				FederationEvaluationStatistics stats = new FederationEvaluationStatistics(queryInfo, dataset);
 				query = strategy.optimize(query, stats, bindings);
 			} catch (Exception e) {
@@ -119,9 +121,9 @@ public class FedXConnection extends AbstractSailConnection {
 		}
 
 		// log the optimized query plan, if Config#isLogQueryPlan(), otherwise void operation
-		FederationManager.getMonitoringService().logQueryPlan(query);
+		federationContext.getMonitoringService().logQueryPlan(query);
 
-		if (Config.getConfig().isDebugQueryPlan()) {
+		if (federationContext.getConfig().isDebugQueryPlan()) {
 			System.out.println("Optimized query execution plan: \n" + query);
 		}
 
@@ -191,16 +193,16 @@ public class FedXConnection extends AbstractSailConnection {
 	@Override
 	protected CloseableIteration<? extends Resource, SailException> getContextIDsInternal() throws SailException {
 
-		FederationEvalStrategy strategy = FederationManager.getInstance().getStrategy();
-		final WorkerUnionBase<Resource> union = new SynchronousWorkerUnion<Resource>(strategy,
-				new QueryInfo("getContextIDsInternal", QueryType.UNKNOWN, 0));
+		FederationEvalStrategy strategy = federationContext.getStrategy();
+		final WorkerUnionBase<Resource> union = new SynchronousWorkerUnion<>(strategy,
+				new QueryInfo("getContextIDsInternal", QueryType.UNKNOWN, 0, federationContext));
 
 		for (final Endpoint e : federation.getMembers()) {
 			union.addTask(new ParallelTask<Resource>() {
 				@Override
 				public CloseableIteration<Resource, QueryEvaluationException> performTask() throws Exception {
 					try (RepositoryConnection conn = e.getConnection()) {
-						return new RepositoryExceptionConvertingIteration<Resource>(conn.getContextIDs());
+						return new RepositoryExceptionConvertingIteration<>(conn.getContextIDs());
 					}
 				}
 
@@ -216,7 +218,7 @@ public class FedXConnection extends AbstractSailConnection {
 		}
 
 		// execute the union in a separate thread
-		FederationManager.getInstance().getExecutor().execute(union);
+		federationContext.getManager().getExecutor().execute(union);
 
 		return new DistinctIteration<Resource, SailException>(
 				new ExceptionConvertingIteration<Resource, SailException>(union) {
@@ -248,9 +250,9 @@ public class FedXConnection extends AbstractSailConnection {
 			final Resource... contexts) throws SailException {
 
 		try {
-			FederationEvalStrategy strategy = FederationManager.getInstance().getStrategy();
-			QueryInfo queryInfo = new QueryInfo(subj, pred, obj);
-			FederationManager.getMonitoringService().monitorQuery(queryInfo);
+			FederationEvalStrategy strategy = federationContext.getStrategy();
+			QueryInfo queryInfo = new QueryInfo(subj, pred, obj, federationContext);
+			federationContext.getMonitoringService().monitorQuery(queryInfo);
 			CloseableIteration<Statement, QueryEvaluationException> res = strategy.getStatements(queryInfo, subj, pred,
 					obj, contexts);
 			return new ExceptionConvertingIteration<Statement, SailException>(res) {
@@ -310,7 +312,7 @@ public class FedXConnection extends AbstractSailConnection {
 		if (contexts != null && contexts.length > 0)
 			throw new UnsupportedOperationException("Context handling for size() not supported");
 		long size = 0;
-		List<String> errorEndpoints = new ArrayList<String>();
+		List<String> errorEndpoints = new ArrayList<>();
 		for (Endpoint e : federation.getMembers()) {
 			try {
 				size += e.size();
@@ -374,7 +376,7 @@ public class FedXConnection extends AbstractSailConnection {
 
 	/**
 	 * Return the original explicit {@link Operation#getMaxExecutionTime()} in seconds, 0 if
-	 * {@link Config#getEnforceMaxQueryTime()} should be applied.
+	 * {@link FedXConfig#getEnforceMaxQueryTime()} should be applied.
 	 * 
 	 * @param b
 	 * @return

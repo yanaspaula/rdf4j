@@ -12,8 +12,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.eclipse.rdf4j.federated.Config;
-import org.eclipse.rdf4j.federated.QueryManager;
+import org.eclipse.rdf4j.federated.FederationContext;
 import org.eclipse.rdf4j.federated.evaluation.concurrent.ParallelTask;
 import org.eclipse.rdf4j.federated.util.QueryStringUtil;
 import org.eclipse.rdf4j.model.IRI;
@@ -44,35 +43,41 @@ public class QueryInfo {
 	private final long maxExecutionTimeMs;
 	private final long start;
 
+	private final FederationContext federationContext;
+
 	protected boolean done = false;
 
 	protected Set<ParallelTask<?>> scheduledSubtasks = ConcurrentHashMap.newKeySet();
 
-	public QueryInfo(String query, QueryType queryType) {
-		this(query, queryType, 0);
+	public QueryInfo(String query, QueryType queryType, FederationContext federationContext) {
+		this(query, queryType, 0, federationContext);
 	}
 
 	/**
 	 * 
 	 * @param query
 	 * @param queryType
-	 * @param maxExecutionTime the maximum explicit query time in seconds, if 0 use
-	 *                         {@link Config#getEnforceMaxQueryTime()}
+	 * @param maxExecutionTime  the maximum explicit query time in seconds, if 0 use
+	 *                          {@link FedXConfig#getEnforceMaxQueryTime())
+	 * @param federationContext the {@link FederationContext}
 	 */
-	public QueryInfo(String query, QueryType queryType, int maxExecutionTime) {
+	public QueryInfo(String query, QueryType queryType, int maxExecutionTime, FederationContext federationContext) {
 		super();
-		this.queryID = QueryManager.getNextQueryId();
+		this.queryID = federationContext.getQueryManager().getNextQueryId();
+
+		this.federationContext = federationContext;
 
 		this.query = query;
 		this.queryType = queryType;
 
-		int _maxExecutionTime = maxExecutionTime <= 0 ? Config.getConfig().getEnforceMaxQueryTime() : maxExecutionTime;
+		int _maxExecutionTime = maxExecutionTime <= 0 ? federationContext.getConfig().getEnforceMaxQueryTime()
+				: maxExecutionTime;
 		this.maxExecutionTimeMs = _maxExecutionTime * 1000;
 		this.start = System.currentTimeMillis();
 	}
 
-	public QueryInfo(Resource subj, IRI pred, Value obj) {
-		this(QueryStringUtil.toString(subj, (IRI) pred, obj), QueryType.GET_STATEMENTS);
+	public QueryInfo(Resource subj, IRI pred, Value obj, FederationContext federationContext) {
+		this(QueryStringUtil.toString(subj, (IRI) pred, obj), QueryType.GET_STATEMENTS, federationContext);
 	}
 
 	public BigInteger getQueryID() {
@@ -85,6 +90,14 @@ public class QueryInfo {
 
 	public QueryType getQueryType() {
 		return queryType;
+	}
+
+	/**
+	 * 
+	 * @return the {@link FederationContext} in which this query is executed
+	 */
+	public FederationContext getFederationContext() {
+		return this.federationContext;
 	}
 
 	/**

@@ -11,9 +11,11 @@ import java.io.File;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.rdf4j.common.platform.PlatformFactory;
+import org.eclipse.rdf4j.federated.repository.FedXRepository;
 import org.eclipse.rdf4j.federated.server.SPARQLEmbeddedServer;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.base.RepositoryWrapper;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -43,7 +45,6 @@ public class FedXInRDF4JWorkbenchTest extends SPARQLServerBaseTest {
 		fedXDataDir.mkdirs();
 
 		FileUtils.copyFile(toFile("/tests/rdf4jserver/config.ttl"), new File(fedXDataDir, "config.ttl"));
-		FileUtils.copyFile(toFile("/tests/rdf4jserver/fedxConfig.prop"), new File(fedXDataDir, "fedxConfig.prop"));
 
 		String fedXSparqlUrl = rdf4jServer.getRepositoryUrl(repositoryId);
 		SPARQLRepository repo = new SPARQLRepository(fedXSparqlUrl);
@@ -57,7 +58,7 @@ public class FedXInRDF4JWorkbenchTest extends SPARQLServerBaseTest {
 		repo.shutDown();
 
 		// check that cache is persisted in the expected location
-		FederationManager.getInstance().getCache().persist();
+		getFedXRepository(repositoryId).getFederationContext().getCache().persist();
 		Assertions.assertTrue(new File(fedXDataDir, "cache.db").isFile());
 
 		// temporary workaround: shutdown the federation repository explicitly here to
@@ -92,7 +93,6 @@ public class FedXInRDF4JWorkbenchTest extends SPARQLServerBaseTest {
 
 		FileUtils.copyFile(toFile("/tests/rdf4jserver/config-withDataConfig.ttl"), new File(fedXDataDir, "config.ttl"));
 		FileUtils.copyFile(toFile("/tests/rdf4jserver/dataConfig.ttl"), new File(fedXDataDir, "dataConfig.ttl"));
-		FileUtils.copyFile(toFile("/tests/rdf4jserver/fedxConfig.prop"), new File(fedXDataDir, "fedxConfig.prop"));
 
 		String fedXSparqlUrl = rdf4jServer.getRepositoryUrl(repositoryId);
 		SPARQLRepository repo = new SPARQLRepository(fedXSparqlUrl);
@@ -106,7 +106,7 @@ public class FedXInRDF4JWorkbenchTest extends SPARQLServerBaseTest {
 		repo.shutDown();
 
 		// check that cache is persisted in the expected location
-		FederationManager.getInstance().getCache().persist();
+		getFedXRepository(repositoryId).getFederationContext().getCache().persist();
 		Assertions.assertTrue(new File(fedXDataDir, "cache.db").isFile());
 
 		// temporary workaround: shutdown the federation repository explicitly here to
@@ -119,5 +119,16 @@ public class FedXInRDF4JWorkbenchTest extends SPARQLServerBaseTest {
 
 	protected File toFile(String resource) throws Exception {
 		return new File(FedXInRDF4JWorkbenchTest.class.getResource(resource).toURI());
+	}
+
+	@Override
+	protected FederationContext federationContext() {
+		throw new UnsupportedOperationException("Not available in this test.");
+	}
+
+	protected FedXRepository getFedXRepository(String repositoryId) {
+		RepositoryWrapper wrapper = (RepositoryWrapper) ((SPARQLEmbeddedServer) server).getRepositoryResolver()
+				.getRepository(repositoryId);
+		return (FedXRepository) wrapper.getDelegate();
 	}
 }

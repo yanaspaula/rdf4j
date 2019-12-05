@@ -30,6 +30,8 @@
 		<module>solr</module>
 		<module>elasticsearch</module>
 		<module>readonly</module>
+		<module>elasticsearch-store</module>
+		<module>extensible-store</module>
 	</modules>
 
 </project>

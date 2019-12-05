@@ -398,7 +398,7 @@ public class ShaclSailConnection extends NotifyingSailConnectionWrapper implemen
 										propertyShape.getId());
 							}
 
-							boolean valid = collect.size() == 0;
+							boolean valid = collect.isEmpty();
 
 							if (!valid && sail.isLogValidationViolations()) {
 								PropertyShape propertyShape = ((EnrichWithShape) planNode).getPropertyShape();

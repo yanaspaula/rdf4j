@@ -7,7 +7,6 @@
  *******************************************************************************/
 package demos;
 
-import org.eclipse.rdf4j.federated.Config;
 import org.eclipse.rdf4j.federated.FedXFactory;
 import org.eclipse.rdf4j.federated.repository.FedXRepository;
 import org.eclipse.rdf4j.query.BindingSet;
@@ -19,14 +18,12 @@ public class GettingStartedDemo {
 
 	public static void main(String[] args) {
 
-		Config.initialize();
-
-		Config.getConfig().set("debugQueryPlan", "true");
-
 		FedXRepository repository = FedXFactory.newFederation()
 				.withSparqlEndpoint("http://dbpedia.org/sparql")
 				.withSparqlEndpoint("https://query.wikidata.org/sparql")
 				.create();
+
+		repository.init();
 
 		try (RepositoryConnection conn = repository.getConnection()) {
 

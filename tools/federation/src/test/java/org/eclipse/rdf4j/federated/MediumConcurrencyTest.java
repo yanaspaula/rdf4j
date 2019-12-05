@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -22,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class MediumConcurrencyTest extends SPARQLBaseTest {
@@ -79,6 +79,7 @@ public class MediumConcurrencyTest extends SPARQLBaseTest {
 	}
 
 	@Test
+	@Disabled // just a test for showing the phaser
 	public void testPhaser() throws Exception {
 
 		final Phaser p1 = new Phaser(1);
@@ -86,19 +87,15 @@ public class MediumConcurrencyTest extends SPARQLBaseTest {
 
 		for (int i = 0; i < 10; i++) {
 			final int tid = i;
-			executor.submit(new Runnable() {
-
-				@Override
-				public void run() {
-					p1.register();
-					try {
-						Thread.sleep(rand.nextInt(10) * 1000);
-					} catch (InterruptedException e) {
-						throw new RuntimeException(e);
-					}
-					System.out.println("Task " + tid + " done");
-					p1.arriveAndDeregister();
+			executor.submit(() -> {
+				p1.register();
+				try {
+					Thread.sleep(rand.nextInt(10) * 1000);
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
 				}
+				System.out.println("Task " + tid + " done");
+				p1.arriveAndDeregister();
 			});
 		}
 		System.out.println("Waiting for tasks to finish");
@@ -107,14 +104,10 @@ public class MediumConcurrencyTest extends SPARQLBaseTest {
 	}
 
 	protected Future<String> submit(final String query, final int queryId) {
-		return executor.submit(new Callable<String>() {
-
-			@Override
-			public String call() throws Exception {
-				log.info("Executing query " + queryId + ": " + query);
-				execute("/tests/medium/" + query + ".rq", "/tests/medium/" + query + ".srx", false);
-				return "Ok";
-			}
+		return executor.submit(() -> {
+			log.info("Executing query " + queryId + ": " + query);
+			execute("/tests/medium/" + query + ".rq", "/tests/medium/" + query + ".srx", false);
+			return "Ok";
 		});
 	}
 }
