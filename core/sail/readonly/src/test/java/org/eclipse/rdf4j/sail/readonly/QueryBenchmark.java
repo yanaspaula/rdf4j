@@ -18,6 +18,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.readonly.backend.arraylist.CollectionReadOnlyBackendFactory;
+import org.eclipse.rdf4j.sail.readonly.backend.bplus.BPlusTreeReadOnlyBackendFactory;
 import org.eclipse.rdf4j.sail.readonly.backend.linkedhashmodel.LinkedHashModelReadOnlyBackendFactory;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
@@ -42,16 +43,17 @@ import java.util.concurrent.TimeUnit;
  * @author Håvard Ottestad
  */
 @State(Scope.Benchmark)
-@Warmup(iterations = 20)
+@Warmup(iterations = 0)
 @BenchmarkMode({ Mode.AverageTime })
-@Fork(value = 1, jvmArgs = { "-Xms8G", "-Xmx8G", "-Xmn4G", "-XX:+UseSerialGC" })
-//@Fork(value = 1, jvmArgs = {"-Xms8G", "-Xmx8G", "-Xmn4G", "-XX:+UseSerialGC", "-XX:+UnlockCommercialFeatures", "-XX:StartFlightRecording=delay=60s,duration=120s,filename=recording.jfr,settings=profile", "-XX:FlightRecorderOptions=samplethreads=true,stackdepth=1024", "-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints"})
-@Measurement(iterations = 10)
+//@Fork(value = 1, jvmArgs = { "-Xms8G", "-Xmx8G", "-Xmn4G", "-XX:+UseSerialGC" })
+@Fork(value = 1, jvmArgs = {"-Xms8G", "-Xmx8G",/*"-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI", "-XX:+UseJVMCICompiler",*/ "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=10", "-XX:StartFlightRecording=delay=60s,duration=120s,filename=recording.jfr,settings=profile,", "-XX:FlightRecorderOptions=samplethreads=true,stackdepth=1024", "-XX:+UnlockDiagnosticVMOptions", "-XX:+DebugNonSafepoints"})
+@Measurement(iterations = 100)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 public class QueryBenchmark {
 
 	SailRepository collectionBackedRespository;
 	SailRepository lhmBackedRespository;
+	SailRepository bptreeBackedRespository;
 	SailRepository memoryStore;
 
 	private static final String query1;
@@ -71,7 +73,7 @@ public class QueryBenchmark {
 		}
 	}
 
-	@Setup(Level.Invocation)
+	@Setup(Level.Trial)
 	public void beforeClass() throws IOException, InterruptedException {
 
 		Model parse = Rio.parse(getResourceAsStream("benchmarkFiles/bsbm-100.ttl"), "", RDFFormat.TURTLE);
@@ -84,6 +86,10 @@ public class QueryBenchmark {
 				new ReadOnlyStore(new LinkedHashModelReadOnlyBackendFactory(), parse));
 		lhmBackedRespository.init();
 
+		bptreeBackedRespository = new SailRepository(
+			new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
+		bptreeBackedRespository.init();
+
 		memoryStore = new SailRepository(new MemoryStore());
 		memoryStore.init();
 		try (SailRepositoryConnection connection = memoryStore.getConnection()) {
@@ -91,6 +97,7 @@ public class QueryBenchmark {
 		}
 
 		System.gc();
+		Thread.sleep(10);
 
 	}
 
@@ -114,6 +121,27 @@ public class QueryBenchmark {
 	}
 
 	@Benchmark
+	public List<BindingSet> groupByQueryLinkedHashModel() {
+
+		try (SailRepositoryConnection connection = lhmBackedRespository.getConnection()) {
+			return Iterations.asList(connection
+					.prepareTupleQuery(query1)
+					.evaluate());
+		}
+	}
+
+
+	@Benchmark
+	public List<BindingSet> groupByQueryBtree() {
+
+		try (SailRepositoryConnection connection = bptreeBackedRespository.getConnection()) {
+			return Iterations.asList(connection
+				.prepareTupleQuery(query1)
+				.evaluate());
+		}
+	}
+
+	@Benchmark
 	public List<BindingSet> groupByQueryMemoryStore() {
 
 		try (SailRepositoryConnection connection = memoryStore.getConnection()) {
@@ -124,9 +152,9 @@ public class QueryBenchmark {
 	}
 
 	@Benchmark
-	public List<BindingSet> linkedQueryCollection() {
+	public List<BindingSet> linkedQueryBtree() {
 
-		try (SailRepositoryConnection connection = collectionBackedRespository.getConnection()) {
+		try (SailRepositoryConnection connection = bptreeBackedRespository.getConnection()) {
 			return Iterations.asList(connection
 					.prepareTupleQuery(query2)
 					.evaluate());
@@ -140,6 +168,16 @@ public class QueryBenchmark {
 			return Iterations.asList(connection
 					.prepareTupleQuery(query2)
 					.evaluate());
+		}
+	}
+
+	@Benchmark
+	public List<BindingSet> linkedQueryCollection() {
+
+		try (SailRepositoryConnection connection = collectionBackedRespository.getConnection()) {
+			return Iterations.asList(connection
+				.prepareTupleQuery(query2)
+				.evaluate());
 		}
 	}
 
@@ -160,6 +198,16 @@ public class QueryBenchmark {
 			return Iterations.asList(connection
 					.prepareTupleQuery(query3)
 					.evaluate());
+		}
+	}
+
+	@Benchmark
+	public List<BindingSet> linkedNoResultsQueryBtree() {
+
+		try (SailRepositoryConnection connection = bptreeBackedRespository.getConnection()) {
+			return Iterations.asList(connection
+				.prepareTupleQuery(query3)
+				.evaluate());
 		}
 	}
 

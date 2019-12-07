@@ -112,7 +112,7 @@ public class BPlusReadOnlyBackend extends ReadOnlyBackend {
 	@Override
 	public CloseableIteration<? extends Statement, SailException> getStatements(Resource subject, IRI predicate,
 																				Value object, Resource... context) {
-		ListIterable iterable;
+		IterableThatCouldNeedFurtherFiltering iterable;
 
 		if (sPOIndex == null || sPOIndex.isEmpty()) {
 			return new CloseableIterationOverIterator(emptyListIterable.iterator());

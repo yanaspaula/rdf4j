@@ -163,9 +163,9 @@ public class BplusTree<E> {
 	}
 
 	public class DataNode {
-		final Object[] datanodes = new Object[NODE_SIZE];
+		public final Object[] datanodes = new Object[NODE_SIZE];
 
-		DataNode next;
+		public DataNode next;
 
 		int size = 0;
 
