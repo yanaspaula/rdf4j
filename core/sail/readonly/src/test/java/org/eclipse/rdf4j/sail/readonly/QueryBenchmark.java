@@ -87,7 +87,7 @@ public class QueryBenchmark {
 		lhmBackedRespository.init();
 
 		bptreeBackedRespository = new SailRepository(
-			new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
+				new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
 		bptreeBackedRespository.init();
 
 		memoryStore = new SailRepository(new MemoryStore());
@@ -130,14 +130,13 @@ public class QueryBenchmark {
 		}
 	}
 
-
 	@Benchmark
 	public List<BindingSet> groupByQueryBtree() {
 
 		try (SailRepositoryConnection connection = bptreeBackedRespository.getConnection()) {
 			return Iterations.asList(connection
-				.prepareTupleQuery(query1)
-				.evaluate());
+					.prepareTupleQuery(query1)
+					.evaluate());
 		}
 	}
 
@@ -176,8 +175,8 @@ public class QueryBenchmark {
 
 		try (SailRepositoryConnection connection = collectionBackedRespository.getConnection()) {
 			return Iterations.asList(connection
-				.prepareTupleQuery(query2)
-				.evaluate());
+					.prepareTupleQuery(query2)
+					.evaluate());
 		}
 	}
 
@@ -206,8 +205,8 @@ public class QueryBenchmark {
 
 		try (SailRepositoryConnection connection = bptreeBackedRespository.getConnection()) {
 			return Iterations.asList(connection
-				.prepareTupleQuery(query3)
-				.evaluate());
+					.prepareTupleQuery(query3)
+					.evaluate());
 		}
 	}
 

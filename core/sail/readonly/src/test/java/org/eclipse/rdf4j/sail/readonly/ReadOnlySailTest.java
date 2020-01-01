@@ -89,14 +89,15 @@ public class ReadOnlySailTest {
 		Model parse = Rio.parse(getResourceAsStream("benchmarkFiles/bsbm-100.ttl"), "", RDFFormat.TURTLE);
 
 		SailRepository repository = new SailRepository(
-			new ReadOnlyStore(new LinkedHashModelReadOnlyBackendFactory(), parse));
+				new ReadOnlyStore(new LinkedHashModelReadOnlyBackendFactory(), parse));
 		repository.init();
 
 		try (SailRepositoryConnection connection = repository.getConnection()) {
-			TupleQuery tupleQuery = connection.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
+			TupleQuery tupleQuery = connection
+					.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
 			TupleQueryResult evaluate = tupleQuery.evaluate();
 			List<BindingSet> bindingSets = Iterations.asList(
-				evaluate);
+					evaluate);
 			System.out.println(bindingSets.size());
 		}
 	}
@@ -106,18 +107,18 @@ public class ReadOnlySailTest {
 		Model parse = Rio.parse(getResourceAsStream("benchmarkFiles/bsbm-100.ttl"), "", RDFFormat.TURTLE);
 
 		SailRepository repository = new SailRepository(
-			new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
+				new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
 		repository.init();
 
 		try (SailRepositoryConnection connection = repository.getConnection()) {
-			TupleQuery tupleQuery = connection.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
+			TupleQuery tupleQuery = connection
+					.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
 			TupleQueryResult evaluate = tupleQuery.evaluate();
 			List<BindingSet> bindingSets = Iterations.asList(
-				evaluate);
+					evaluate);
 			System.out.println(bindingSets.size());
 		}
 	}
-
 
 	@Test
 	public void sparqlMemoryStore() throws IOException {
@@ -131,33 +132,32 @@ public class ReadOnlySailTest {
 		}
 
 		try (SailRepositoryConnection connection = repository.getConnection()) {
-			TupleQuery tupleQuery = connection.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
+			TupleQuery tupleQuery = connection
+					.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
 			TupleQueryResult evaluate = tupleQuery.evaluate();
 			List<BindingSet> bindingSets = Iterations.asList(
-				evaluate);
+					evaluate);
 			System.out.println(bindingSets.size());
 		}
 	}
-
-
 
 	@Test
 	public void sparqlBplus2() throws IOException {
 		Model parse = Rio.parse(getResourceAsStream("benchmarkFiles/bsbm-100.ttl"), "", RDFFormat.TURTLE);
 
 		SailRepository repository = new SailRepository(
-			new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
+				new ReadOnlyStore(new BPlusTreeReadOnlyBackendFactory(), parse));
 		repository.init();
 
-
-		for(int i = 0; i<1000; i++) {
+		for (int i = 0; i < 1000; i++) {
 
 			try (SailRepositoryConnection connection = repository.getConnection()) {
-				TupleQuery tupleQuery = connection.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
+				TupleQuery tupleQuery = connection
+						.prepareTupleQuery(IOUtil.readString(getResourceAsStream("benchmarkFiles/query2.qr")));
 				TupleQueryResult evaluate = tupleQuery.evaluate();
 				List<BindingSet> bindingSets = Iterations.asList(
-					evaluate);
-				if(bindingSets.size() > 2940) {
+						evaluate);
+				if (bindingSets.size() > 2940) {
 					System.out.println(bindingSets.size());
 				}
 			}

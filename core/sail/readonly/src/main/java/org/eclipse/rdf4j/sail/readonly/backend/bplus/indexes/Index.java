@@ -21,7 +21,6 @@ public abstract class Index {
 
 	final Comparator<Statement> comparator = getComparator();
 
-
 	public Index(Collection<Statement> collect) {
 		ArrayList<Statement> list = new ArrayList<>(collect);
 
@@ -31,18 +30,12 @@ public abstract class Index {
 
 	}
 
-
-	public IterableThatCouldNeedFurtherFiltering getStatements(Resource subject, IRI predicate, Value object, Resource[] context) {
-
-
-
-
-
+	public IterableThatCouldNeedFurtherFiltering getStatements(Resource subject, IRI predicate, Value object,
+			Resource[] context) {
 
 		PartialStatement find = new PartialStatement(subject, predicate, object, null);
 		BplusTree<Statement>.DataNode firstNode = index
-			.getFirstNode(find);
-
+				.getFirstNode(find);
 
 		int startIndex;
 		boolean keepGoing = true;
@@ -64,7 +57,6 @@ public abstract class Index {
 		BplusTree<Statement>.DataNode finalFirstNode = firstNode;
 		int finalStartIndex = startIndex;
 
-
 		return new IterableThatCouldNeedFurtherFiltering() {
 			@Override
 			public Iterator<Statement> iterator() {
@@ -72,12 +64,10 @@ public abstract class Index {
 				return new Iterator<Statement>() {
 
 					BplusTree<Statement>.DataNode lastNode = index
-						.getLastNode(new PartialStatement(subject, predicate, object, null));
-
+							.getLastNode(new PartialStatement(subject, predicate, object, null));
 
 					BplusTree<Statement>.DataNode currentNode = finalFirstNode;
 					int currentIndex = finalStartIndex;
-
 
 					Statement next;
 
@@ -86,49 +76,43 @@ public abstract class Index {
 							return;
 						}
 
-
 						while (next == null) {
-
 
 							// inside last node
 							if (currentNode == lastNode) {
 
-								if(currentIndex >= currentNode.datanodes.length) break;
+								if (currentIndex >= currentNode.datanodes.length)
+									break;
 
 								int compare = comparator.compare(find, (Statement) currentNode.datanodes[currentIndex]);
 
-								if(compare == 0){
+								if (compare == 0) {
 									next = (Statement) currentNode.datanodes[currentIndex];
 									currentIndex++;
-								}else{
+								} else {
 									break;
 									// exhausted!
 								}
 							}
-
 
 							// inside the currentNode
 							else if (currentIndex < currentNode.datanodes.length) {
 								next = (Statement) currentNode.datanodes[currentIndex];
 								currentIndex++;
 
-							}else{
+							} else {
 
 								currentIndex = 0;
 								currentNode = currentNode.next;
 							}
 
-
-
 						}
-
 
 					}
 
 					@Override
 					public boolean hasNext() {
 						calculateNext();
-
 
 						return next != null;
 					}
@@ -150,7 +134,6 @@ public abstract class Index {
 				return false;
 			}
 		};
-
 
 	}
 

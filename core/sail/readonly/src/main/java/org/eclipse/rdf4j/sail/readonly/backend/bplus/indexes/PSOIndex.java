@@ -8,7 +8,6 @@ import java.util.Comparator;
 
 public class PSOIndex extends Index {
 
-
 	public PSOIndex(Collection<Statement> collect) {
 		super(collect);
 	}
