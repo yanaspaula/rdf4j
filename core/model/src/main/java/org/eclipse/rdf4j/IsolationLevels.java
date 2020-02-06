@@ -16,9 +16,12 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.SESAME;
 
 /**
- * Enumeration of Transaction {@link IsolationLevel}s supported by Sesame. Note that Sesame stores are not required to
- * support all levels, consult the documentatation for the specific SAIL implementation you are using to find out which
+ * Enumeration of Transaction {@link IsolationLevel}s supported by RDF4J. Note that RDF$J stores are not required to
+ * support all levels, consult the documentation for the specific SAIL implementation you are using to find out which
  * levels are supported.
+ * 
+ * @deprecated since 3.1.0. The use of these enum values is discouraged, instead use the correspondings constants on the
+ *             {@link IsolationLevel} interface.
  * 
  * @author Jeen Broekstra
  * @author James Leigh
@@ -28,49 +31,67 @@ public enum IsolationLevels implements IsolationLevel {
 	/**
 	 * None: the lowest isolation level; transactions can see their own changes, but may not be able to roll them back
 	 * and no support for isolation among transactions is guaranteed
+	 * 
+	 * @deprecated since 3.1.0. Use {@link IsolationLevel#NONE} instead.
 	 */
-	NONE,
+	@Deprecated
+	NONE(IsolationLevel.NONE),
 
 	/**
 	 * Read Uncommitted: transactions can be rolled back, but not necessarily isolated: concurrent transactions might
 	 * see each other's uncommitted data (so-called 'dirty reads')
+	 * 
+	 * @deprecated since 3.1.0. Use {@link IsolationLevel#READ_UNCOMMITTED} instead.
 	 */
-	READ_UNCOMMITTED(NONE),
+	@Deprecated
+	READ_UNCOMMITTED(NONE, IsolationLevel.READ_UNCOMMITTED),
 
 	/**
 	 * Read Committed: in this isolation level only statements from other transactions that have been committed (at some
 	 * point) can be seen by this transaction.
+	 * 
+	 * @deprecated since 3.1.0. Use {@link IsolationLevel#READ_COMMITTED} instead.
 	 */
-	READ_COMMITTED(READ_UNCOMMITTED, NONE),
+	@Deprecated
+	READ_COMMITTED(READ_UNCOMMITTED, NONE, IsolationLevel.READ_COMMITTED),
 
 	/**
 	 * Snapshot Read: in addition to {@link #READ_COMMITTED}, query results in this isolation level that are observed
 	 * within a successful transaction will observe a consistent snapshot. Changes to the data occurring while a query
-	 * is evaluated will not affect that query result.
+	 * is evaluated will not affect that query result. * @deprecated since 3.1.0. Use
+	 * {@link IsolationLevel#SNAPSHOT_READ} instead.
 	 */
-	SNAPSHOT_READ(READ_COMMITTED, READ_UNCOMMITTED, NONE),
+	@Deprecated
+	SNAPSHOT_READ(READ_COMMITTED, READ_UNCOMMITTED, NONE, IsolationLevel.SNAPSHOT_READ),
 
 	/**
 	 * Snapshot: in addition to {@link #SNAPSHOT_READ}, successful transactions in this isolation level will operate
 	 * against a particular dataset snapshot. Transactions in this isolation level will see either the complete effects
 	 * of other transactions (consistently throughout) or not at all.
+	 * 
+	 * @deprecated since 3.1.0. Use {@link IsolationLevel#SNAPSHOT} instead.
 	 */
-	SNAPSHOT(SNAPSHOT_READ, READ_COMMITTED, READ_UNCOMMITTED, NONE),
+	@Deprecated
+	SNAPSHOT(SNAPSHOT_READ, READ_COMMITTED, READ_UNCOMMITTED, NONE, IsolationLevel.SNAPSHOT),
 
 	/**
 	 * Serializable: in addition to {@link #SNAPSHOT}, this isolation level requires that all other successful
 	 * transactions must appear to occur either completely before or completely after a successful serializable
 	 * transaction.
+	 * 
+	 * @deprecated since 3.1.0. Use {@link IsolationLevel#SERIALIZABLE} instead.
 	 */
-	SERIALIZABLE(SNAPSHOT, SNAPSHOT_READ, READ_COMMITTED, READ_UNCOMMITTED, NONE);
+	@Deprecated
+	SERIALIZABLE(SNAPSHOT, SNAPSHOT_READ, READ_COMMITTED, READ_UNCOMMITTED, NONE, IsolationLevel.SERIALIZABLE);
 
-	private final List<? extends IsolationLevels> compatibleLevels;
+	private final List<? extends IsolationLevel> compatibleLevels;
 
-	private IsolationLevels(IsolationLevels... compatibleLevels) {
+	private IsolationLevels(IsolationLevel... compatibleLevels) {
 		this.compatibleLevels = Arrays.asList(compatibleLevels);
 	}
 
 	@Override
+	@Deprecated
 	public boolean isCompatibleWith(IsolationLevel otherLevel) {
 		return this.equals(otherLevel) || compatibleLevels.contains(otherLevel);
 	}
@@ -110,6 +131,7 @@ public enum IsolationLevels implements IsolationLevel {
 	}
 
 	@Override
+	@Deprecated
 	public IRI getURI() {
 		final ValueFactory f = SimpleValueFactory.getInstance();
 		return f.createIRI(SESAME.NAMESPACE, this.name());
