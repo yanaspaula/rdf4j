@@ -43,7 +43,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -321,6 +320,9 @@ class ElasticsearchDataStructure implements DataStructureInterface {
 				addStatementBuffer = new HashSet<>(Math.min(addStatementBuffer.size(), BUFFER_THRESHOLD));
 			}
 
+			if (workingBuffer.isEmpty())
+				return;
+
 			BulkRequestBuilder bulkRequest = clientProvider.getClient().prepareBulk();
 
 			int failures = 0;
@@ -332,46 +334,44 @@ class ElasticsearchDataStructure implements DataStructureInterface {
 						.stream()
 						.parallel()
 						.map(statement -> {
+							ElasticsearchStatementPOJO pojo = new ElasticsearchStatementPOJO();
 
-							Map<String, Object> jsonMap = new HashMap<>();
-
-							jsonMap.put("subject", statement.getSubject().stringValue());
-							jsonMap.put("predicate", statement.getPredicate().stringValue());
-							jsonMap.put("object", statement.getObject().stringValue());
-							jsonMap.put("object_Hash", statement.getObject().stringValue().hashCode());
+							pojo.subject = statement.getSubject().stringValue();
+							pojo.predicate = statement.getPredicate().stringValue();
+							pojo.object = statement.getObject().stringValue();
+							pojo.object_Hash = statement.getObject().stringValue().hashCode();
 
 							Resource context = statement.getContext();
 
 							if (context != null) {
-								jsonMap.put("context", context.stringValue());
+								pojo.context = context.stringValue();
 
 								if (context instanceof IRI) {
-									jsonMap.put("context_IRI", true);
+									pojo.context_IRI = true;
 								} else {
-									jsonMap.put("context_BNode", true);
+									pojo.context_BNode = true;
 								}
 							}
 
 							if (statement.getSubject() instanceof IRI) {
-								jsonMap.put("subject_IRI", true);
+								pojo.subject_IRI = true;
 							} else {
-								jsonMap.put("subject_BNode", true);
+								pojo.subject_BNode = true;
 							}
 
 							if (statement.getObject() instanceof IRI) {
-								jsonMap.put("object_IRI", true);
+								pojo.object_IRI = true;
 							} else if (statement.getObject() instanceof BNode) {
-								jsonMap.put("object_BNode", true);
+								pojo.object_BNode = true;
 							} else {
-								jsonMap.put("object_Datatype",
-										((Literal) statement.getObject()).getDatatype().stringValue());
+								pojo.object_Datatype = ((Literal) statement.getObject()).getDatatype().stringValue();
 								if (((Literal) statement.getObject()).getLanguage().isPresent()) {
-									jsonMap.put("object_Lang", ((Literal) statement.getObject()).getLanguage().get());
+									pojo.object_Lang = ((Literal) statement.getObject()).getLanguage().get();
 
 								}
 							}
 
-							return new BuilderAndSha(sha256(statement), jsonMap);
+							return new BuilderAndSha(sha256(statement), pojo);
 
 						})
 						.collect(Collectors.toList())
@@ -379,7 +379,7 @@ class ElasticsearchDataStructure implements DataStructureInterface {
 
 							bulkRequest.add(clientProvider.getClient()
 									.prepareIndex(index, ELASTICSEARCH_TYPE, builderAndSha.getSha256())
-									.setSource(builderAndSha.getMap())
+									.setSource(builderAndSha.getData(), XContentType.CBOR)
 									.setOpType(DocWriteRequest.OpType.CREATE));
 
 						});
@@ -460,8 +460,6 @@ class ElasticsearchDataStructure implements DataStructureInterface {
 				}
 			}
 		}
-
-		return;
 
 	}
 

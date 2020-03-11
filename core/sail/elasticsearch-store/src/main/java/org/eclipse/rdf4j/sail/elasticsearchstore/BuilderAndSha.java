@@ -7,22 +7,35 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.sail.elasticsearchstore;
 
-import java.util.Map;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
 class BuilderAndSha {
-	private final String sha256;
-	private final Map<String, Object> map;
 
-	BuilderAndSha(String sha256, Map<String, Object> map) {
+	final static ObjectMapper objectMapper;
+	static {
+		objectMapper = new ObjectMapper(new CBORFactory());
+	}
+
+	private final String sha256;
+	private final ElasticsearchStatementPOJO data;
+
+	BuilderAndSha(String sha256, ElasticsearchStatementPOJO data) {
 		this.sha256 = sha256;
-		this.map = map;
+		this.data = data;
+
 	}
 
 	String getSha256() {
 		return sha256;
 	}
 
-	Map<String, Object> getMap() {
-		return map;
+	byte[] getData() {
+		try {
+			return objectMapper.writeValueAsBytes(data);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
