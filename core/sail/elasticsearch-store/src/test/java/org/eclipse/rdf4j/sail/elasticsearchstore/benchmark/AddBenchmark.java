@@ -10,9 +10,11 @@ package org.eclipse.rdf4j.sail.elasticsearchstore.benchmark;
 
 import org.assertj.core.util.Files;
 import org.eclipse.rdf4j.IsolationLevels;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.repository.sail.SailRepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.elasticsearchstore.ElasticsearchStore;
 import org.eclipse.rdf4j.sail.elasticsearchstore.TestHelpers;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -52,14 +54,17 @@ public class AddBenchmark {
 
 	private SailRepository elasticsearchStore;
 
+	private Model model;
+
 	@Setup(Level.Trial)
 	public void beforeClass() throws IOException, InterruptedException {
 		embeddedElastic = TestHelpers.startElasticsearch(installLocation,
-				"/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home");
+				"/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home");
 
 		elasticsearchStore = new SailRepository(
 				new ElasticsearchStore("localhost", embeddedElastic.getTransportTcpPort(), "cluster1", "testindex",
 						false));
+		model = Rio.parse(getResourceAsStream("benchmarkFiles/datagovbe-valid.ttl"), "", RDFFormat.TURTLE);
 
 		System.gc();
 
@@ -85,7 +90,7 @@ public class AddBenchmark {
 			connection.commit();
 
 			connection.begin(IsolationLevels.NONE);
-			connection.add(getResourceAsStream("benchmarkFiles/datagovbe-valid.ttl"), "", RDFFormat.TURTLE);
+			connection.add(model);
 			connection.commit();
 		}
 	}
