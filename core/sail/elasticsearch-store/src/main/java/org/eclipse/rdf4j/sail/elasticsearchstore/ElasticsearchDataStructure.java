@@ -58,7 +58,7 @@ class ElasticsearchDataStructure implements DataStructureInterface {
 
 	private static final String MAPPING;
 
-	private int BUFFER_THRESHOLD = 1024 * 16;
+	private int BUFFER_THRESHOLD = 1024 * 8;
 	private final ClientProvider clientProvider;
 	private Set<Statement> addStatementBuffer = new HashSet<>();
 	private Set<ElasticsearchId> deleteStatementBuffer = new HashSet<>();
@@ -316,12 +316,13 @@ class ElasticsearchDataStructure implements DataStructureInterface {
 				if (addStatementBuffer.isEmpty()) {
 					return;
 				}
-				workingBuffer = new HashSet<>(addStatementBuffer);
-				addStatementBuffer = new HashSet<>(Math.min(addStatementBuffer.size(), BUFFER_THRESHOLD));
+				workingBuffer = addStatementBuffer;
+				addStatementBuffer = new HashSet<>(Math.min(addStatementBuffer.size(), BUFFER_THRESHOLD) * 3);
 			}
 
-			if (workingBuffer.isEmpty())
+			if (workingBuffer.isEmpty()) {
 				return;
+			}
 
 			BulkRequestBuilder bulkRequest = clientProvider.getClient().prepareBulk();
 
