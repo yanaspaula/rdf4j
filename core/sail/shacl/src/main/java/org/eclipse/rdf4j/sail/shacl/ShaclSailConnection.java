@@ -25,6 +25,7 @@ import org.eclipse.rdf4j.sail.SailConnection;
 import org.eclipse.rdf4j.sail.SailConnectionListener;
 import org.eclipse.rdf4j.sail.SailException;
 import org.eclipse.rdf4j.sail.UpdateContext;
+import org.eclipse.rdf4j.sail.base.SailStore;
 import org.eclipse.rdf4j.sail.helpers.NotifyingSailConnectionWrapper;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.readonly.ReadOnlyStore;
@@ -61,9 +62,9 @@ public class ShaclSailConnection extends NotifyingSailConnectionWrapper implemen
 
 	private List<NodeShape> nodeShapes;
 
-	private final NotifyingSailConnection previousStateConnection;
-	private final NotifyingSailConnection serializableConnection;
-	private final NotifyingSailConnection previousStateSerializableConnection;
+	private final SailConnection previousStateConnection;
+	private final SailConnection serializableConnection;
+	private final SailConnection previousStateSerializableConnection;
 
 	Sail addedStatements;
 	Sail removedStatements;
@@ -93,8 +94,8 @@ public class ShaclSailConnection extends NotifyingSailConnectionWrapper implemen
 	private IsolationLevel currentIsolationLevel = null;
 
 	ShaclSailConnection(ShaclSail sail, NotifyingSailConnection connection,
-			NotifyingSailConnection previousStateConnection, NotifyingSailConnection serializableConnection,
-			NotifyingSailConnection previousStateSerializableConnection,
+			SailConnection previousStateConnection, SailConnection serializableConnection,
+			SailConnection previousStateSerializableConnection,
 			SailRepositoryConnection shapesRepoConnection) {
 		super(connection);
 		this.previousStateConnection = previousStateConnection;
@@ -369,7 +370,7 @@ public class ShaclSailConnection extends NotifyingSailConnectionWrapper implemen
 						ValidationExecutionLogger validationExecutionLogger = new ValidationExecutionLogger();
 						planNode.receiveLogger(validationExecutionLogger);
 
-						try (Stream<Tuple> stream = Iterations.stream(planNode.iterator())) {
+						try (Stream<Tuple> stream = planNode.iterator().stream()) {
 							if (GlobalValidationExecutionLogging.loggingEnabled) {
 								PropertyShape propertyShape = ((EnrichWithShape) planNode).getPropertyShape();
 								logger.info("Start execution of plan " + propertyShape.getNodeShape().toString() + " : "
@@ -469,7 +470,7 @@ public class ShaclSailConnection extends NotifyingSailConnectionWrapper implemen
 				addedStatements = getNewMemorySail();
 				removedStatements = getNewMemorySail();
 
-				try (Stream<? extends Statement> stream = Iterations.stream(getStatements(null, null, null, false))) {
+				try (Stream<? extends Statement> stream = getStatements(null, null, null, false).stream()) {
 					try (SailConnection connection = addedStatements.getConnection()) {
 						connection.begin(IsolationLevels.NONE);
 						stream
