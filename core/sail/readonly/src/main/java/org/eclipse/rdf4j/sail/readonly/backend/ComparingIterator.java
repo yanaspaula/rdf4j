@@ -15,20 +15,22 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatement;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatementHelper;
 
 import java.util.Iterator;
 
-public class ComparingIterator implements CloseableIteration<Statement, SailException> {
+public class ComparingIterator implements CloseableIteration<ExtensibleStatement, SailException> {
 
 	private Statement next;
 
-	private final CloseableIteration<Statement, SailException> iterator;
+	private final CloseableIteration<? extends Statement, SailException> iterator;
 	private final Resource subject;
 	private final IRI predicate;
 	private final Value object;
 	private final Resource[] context;
 
-	public ComparingIterator(CloseableIteration<Statement, SailException> iterator, Resource subject, IRI predicate, Value object, Resource[] context) {
+	public ComparingIterator(CloseableIteration<? extends Statement, SailException> iterator, Resource subject, IRI predicate, Value object, Resource[] context) {
 		this.iterator = iterator;
 		this.subject = subject;
 		this.predicate = predicate;
@@ -77,12 +79,12 @@ public class ComparingIterator implements CloseableIteration<Statement, SailExce
 	}
 
 	@Override
-	public Statement next() throws SailException {
+	public ExtensibleStatement next() throws SailException {
 		internalNext();
 		Statement temp = next;
 		next = null;
 
-		return temp;
+		return ExtensibleStatementHelper.getDefaultImpl().fromStatement(temp, false);
 	}
 
 	@Override

@@ -17,6 +17,8 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.algebra.evaluation.util.ValueComparator;
 import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatement;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatementHelper;
 import org.eclipse.rdf4j.sail.readonly.backend.ComparingIterator;
 import org.eclipse.rdf4j.sail.readonly.backend.ReadOnlyBackend;
 import org.eclipse.rdf4j.sail.readonly.backend.bplus.indexes.OPSIndex;
@@ -110,8 +112,8 @@ public class BPlusReadOnlyBackend extends ReadOnlyBackend {
 
 
 	@Override
-	public CloseableIteration<? extends Statement, SailException> getStatements(Resource subject, IRI predicate,
-																				Value object, Resource... context) {
+	public CloseableIteration<? extends ExtensibleStatement, SailException> getStatements(Resource subject, IRI predicate,
+																						  Value object, boolean inferred, Resource... context) {
 		IterableThatCouldNeedFurtherFiltering iterable;
 
 		if (sPOIndex == null || sPOIndex.isEmpty()) {
@@ -128,7 +130,7 @@ public class BPlusReadOnlyBackend extends ReadOnlyBackend {
 			iterable = sPOIndex.getStatements(subject, predicate, object, context);
 		}
 
-		CloseableIteration<Statement, SailException> iterator = new CloseableIterationOverIterator(iterable.iterator());
+		CloseableIteration<ExtensibleStatement, SailException> iterator = new CloseableIterationOverIterator(iterable.iterator());
 
 		if (iterable.isNeedsFurtherFiltering()) {
 			iterator = new ComparingIterator(iterator, subject, predicate, object, context);
@@ -140,7 +142,7 @@ public class BPlusReadOnlyBackend extends ReadOnlyBackend {
 
 }
 
-class CloseableIterationOverIterator implements CloseableIteration<Statement, SailException> {
+class CloseableIterationOverIterator implements CloseableIteration<ExtensibleStatement, SailException> {
 
 	private final Iterator<Statement> iterator;
 
@@ -159,8 +161,8 @@ class CloseableIterationOverIterator implements CloseableIteration<Statement, Sa
 	}
 
 	@Override
-	public Statement next() throws SailException {
-		return iterator.next();
+	public ExtensibleStatement next() throws SailException {
+		return ExtensibleStatementHelper.getDefaultImpl().fromStatement(iterator.next(), false);
 	}
 
 	@Override

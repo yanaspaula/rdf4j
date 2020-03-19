@@ -8,6 +8,8 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatement;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatementHelper;
 import org.eclipse.rdf4j.sail.readonly.backend.ReadOnlyBackend;
 
 import java.util.Collection;
@@ -22,17 +24,17 @@ public class LinkedHashModelReadOnlyBackend extends ReadOnlyBackend {
 	}
 
 	@Override
-	public CloseableIteration<? extends Statement, SailException> getStatements(Resource subject, IRI predicate,
-			Value object, Resource... context) {
+	public CloseableIteration<? extends ExtensibleStatement, SailException> getStatements(Resource subject, IRI predicate,
+																						  Value object, boolean inferred, Resource... context) {
 
-		return new LookAheadIteration<Statement, SailException>() {
+		return new LookAheadIteration<ExtensibleStatement, SailException>() {
 
 			Iterator<Statement> iterator = model.filter(subject, predicate, object, context).iterator();
 
 			@Override
-			protected Statement getNextElement() throws SailException {
+			protected ExtensibleStatement getNextElement() throws SailException {
 				if (iterator.hasNext()) {
-					return iterator.next();
+					return ExtensibleStatementHelper.getDefaultImpl().fromStatement(iterator.next(), false);
 				}
 				return null;
 			}

@@ -6,6 +6,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.sail.SailException;
+import org.eclipse.rdf4j.sail.extensiblestore.valuefactory.ExtensibleStatement;
 import org.eclipse.rdf4j.sail.readonly.backend.ComparingIterator;
 import org.eclipse.rdf4j.sail.readonly.backend.ReadOnlyBackend;
 
@@ -20,8 +21,8 @@ public class CollectionReadOnlyBackend extends ReadOnlyBackend {
 	}
 
 	@Override
-	public CloseableIteration<? extends Statement, SailException> getStatements(Resource subject, IRI predicate,
-			Value object, Resource... context) {
+	public CloseableIteration<? extends ExtensibleStatement, SailException> getStatements(Resource subject, IRI predicate,
+																						  Value object, boolean inferred, Resource... context) {
 
 		return new ComparingIterator(list.iterator(), subject, predicate, object, context);
 

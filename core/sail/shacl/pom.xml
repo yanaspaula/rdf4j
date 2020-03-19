@@ -72,7 +72,7 @@
 		</dependency>
         <dependency>
 			<groupId>${project.groupId}</groupId>
-            <artifactId>readonly</artifactId>
+            <artifactId>rdf4j-sail-readonly</artifactId>
 			<version>${project.version}</version>
             <scope>compile</scope>
         </dependency>

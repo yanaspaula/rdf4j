@@ -15,6 +15,7 @@ import org.eclipse.rdf4j.sail.NotifyingSailConnection;
 import org.eclipse.rdf4j.sail.SailException;
 import org.eclipse.rdf4j.sail.extensiblestore.ExtensibleStore;
 import org.eclipse.rdf4j.sail.extensiblestore.SimpleMemoryNamespaceStore;
+import org.eclipse.rdf4j.sail.extensiblestore.evaluationstatistics.EvaluationStatisticsEnum;
 import org.eclipse.rdf4j.sail.readonly.backend.ReadOnlyBackend;
 
 import java.util.Collection;
@@ -27,14 +28,12 @@ public class ReadOnlyStore extends ExtensibleStore<ReadOnlyBackend, SimpleMemory
 
 
 	public ReadOnlyStore(ReadOnlyBackendFactoryInterface backend, Collection<Statement> statements, Collection<Statement> statementsInferred) {
-		dataStructureInferred = backend.supplyBackend(statementsInferred);
 		dataStructure = backend.supplyBackend(statements);
 		namespaceStore = new SimpleMemoryNamespaceStore();
 
 	}
 
 	public ReadOnlyStore(ReadOnlyBackendFactoryInterface backend, Collection<Statement> statements) {
-		dataStructureInferred = backend.supplyBackend(Collections.EMPTY_LIST);
 		dataStructure = backend.supplyBackend(statements);
 		namespaceStore = new SimpleMemoryNamespaceStore();
 	}
@@ -53,5 +52,10 @@ public class ReadOnlyStore extends ExtensibleStore<ReadOnlyBackend, SimpleMemory
 	@Override
 	public IsolationLevel getDefaultIsolationLevel() {
 		return IsolationLevels.NONE;
+	}
+
+	@Override
+	public EvaluationStatisticsEnum getEvaluationStatisticsType() {
+		return EvaluationStatisticsEnum.direct;
 	}
 }
