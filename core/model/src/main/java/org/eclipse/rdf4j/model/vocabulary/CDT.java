@@ -15,7 +15,11 @@ import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 /**
  * Constants for the datatypes propositions in <a href="https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#ucum">Custom Datatypes for Quantity Values</a>.
  *
+ * Only the complex datatypes were implemented in this version.
+ * 
+ * 
  * @see <a href="https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#ucum">Custom Datatypes for Quantity Values</a>
+ * @author Yana Soares de Paula
  */
 public class CDT {
 
@@ -35,10 +39,14 @@ public class CDT {
 	/*
 	 * Main datatypes
 	 */
-
+	
+	/** <tt>https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#complex</tt> */
+	public final static IRI COMPLEX = create("complex");
+	
+	// The following Main cdt:ucum datatypes are to be implemented :
 	/** <tt>https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#ucum</tt> */
 	public final static IRI UCUM = create("ucum");
-
+	
 	/** <tt>https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#ucumunit</tt> */
 	public final static IRI UCUMUNIT = create("ucumunit");
 
@@ -47,9 +55,12 @@ public class CDT {
 	 */
 	
 	/** <tt>https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#complex</tt> */
-	public final static IRI COMPLEX = create("complex");
+	public final static IRI COMPLEXCARTESIAN = create("complexCartesian");
+	
+	/** <tt>https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#complex</tt> */
+	public final static IRI COMPLEXPOLAR = create("complexPolar");
 
-	/* The following cdt:ucum datatypes are to be implemented : */
+	// The following Specific cdt:ucum datatypes are to be implemented :	
 	/** <tt>https://ci.mines-stetienne.fr/lindt/v2/custom_datatypes.html#acceleration</tt> */
 	public final static IRI ACCELERATION = create("acceleration");
 
