@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.complex.ComplexUtils;
+import org.apache.commons.math3.util.FastMath;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.vocabulary.CDT;
 
@@ -384,7 +385,10 @@ public class ComplexDatatypeUtil {
 			while (matcher.find()) {
 				r = Double.parseDouble(matcher.group(1));
 			
-			if (matcher.group(3).contains("[pi][rad]")) {
+			if(matcher.group(3).contains("[rad]") && matcher.group(3).contains("[pi]")) {
+				theta = Double.parseDouble(matcher.group(2));
+				theta = theta * FastMath.PI;
+			} else if (matcher.group(3).contains("[rad]") && !matcher.group(3).contains("[pi]")) {
 				theta = Double.parseDouble(matcher.group(2));
 			} else if(matcher.group(3).contains("[deg]") && !matcher.group(3).contains("[pi]")) {
 				// Transforms degrees in radians
