@@ -353,7 +353,6 @@ public class ComplexDatatypeUtil {
 			throwIAE(value + " is NOT a valid cartesian notation !");
 		
 		Complex complex = ComplexUtils.polar2Complex(r, theta);
-		
 		String real = Double.toString(complex.getReal());
 		String imaginary = Double.toString(complex.getImaginary());
 		

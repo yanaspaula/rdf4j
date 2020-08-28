@@ -106,7 +106,6 @@ public class ComplexDatatypeUtilTest {
 		for (String value : VALID_CARTESIANS) {
 			ComplexDatatypeUtil.parseComplex(value);
 		}
-		
 		for (String value : VALID_POLARS) {
 			ComplexDatatypeUtil.parseComplex(value);
 		}
