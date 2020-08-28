@@ -97,7 +97,8 @@ public class ComplexDatatypeUtilTest {
 		assertEquals("5.0 + 8.0E-7i", ComplexDatatypeUtil.normalize("5   + 8e-7j", CDT.COMPLEXCARTESIAN));
 		assertEquals("-0.005 + 8.0i", ComplexDatatypeUtil.normalize("+ 8j - 5e-3   ", CDT.COMPLEXCARTESIAN));
 		
-		assertEquals("(30.021011266294206, 39.98423292435452)", ComplexDatatypeUtil.normalize("(50,53.1[deg])", CDT.COMPLEXPOLAR));
+		// There are possible problems concerning rounding of numbers because of Apacha Commons Math Complex functions :
+		assertEquals("30.021011266294206 + 39.98423292435452i", ComplexDatatypeUtil.normalize("(50,53.1[deg])", CDT.COMPLEXPOLAR));
 	}
 	
 	@Test

@@ -7,10 +7,12 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.model.datatypes;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.complex.ComplexFormat;
 import org.apache.commons.math3.complex.ComplexUtils;
 import org.apache.commons.math3.util.FastMath;
 import org.eclipse.rdf4j.model.IRI;
@@ -23,7 +25,32 @@ import org.eclipse.rdf4j.model.vocabulary.CDT;
  */
 public class ComplexDatatypeUtil {
 
-
+	/*--------------------*
+	 * RegEx declarations *
+	 *--------------------*/
+	
+	// Groups of decimals
+	final static String decimal = "\\p{Digit}+(?:\\.\\p{Digit}*)?(?:[eE][+-]?\\p{Digit}+)?";
+	
+	// RegEx to cartesian complex notations
+	final static String cartesian = 
+			// Cartesian notations accepted
+			("(([+-]?" + decimal + ")" + "([+-]" + decimal + "[ij]))|" +	// ex : -7 + 4j
+			"(([+-]?" + decimal + ")" + "([+-][ij]" + decimal + "))|" +	// ex : -7 + i4
+			"(([+-]?[ij]" + decimal + ")" + "([+-]" + decimal + "))|" +	// ex : i4 - 7
+			"(([+-]?" + decimal + "[ij])" + "([+-]" + decimal + "))|" +	// ex : 4j - 7
+					
+			// Pure imaginary number
+			"([+-]?[ij]" + decimal + ")|" + 
+			"([+-]?" + decimal + "[ij])|" + 
+			
+			// Pure real number
+			"([+-]?" + decimal + ")"); 
+	
+	// RegEx to polar complex notations
+	final static String polar = "\\((" + decimal + ")[;,]([+-]?" + decimal + ")((?:\\[pi\\])?\\[(?:rad|deg)\\])\\)";
+	
+	
 	/*-------------------*
 	 * Datatype checking *
 	 *-------------------*/
@@ -229,18 +256,60 @@ public class ComplexDatatypeUtil {
 	private static String normalizeCartesian(String value) {
 		Double real = 0.0;
 		Double imaginary = 0.0;
-		Complex complex = parseCartesian(value);
-		String result;
+		String result = "";
 		
-		real = complex.getReal();
-		imaginary = complex.getImaginary();
+		value = value.replaceAll("\\p{Space}+", "");
 		
+		Pattern pattern = Pattern.compile(cartesian);
+		Matcher matcher = pattern.matcher(value);
+		
+		// Separates real and imaginary parts of the string into doubles
+		if (Pattern.matches(cartesian, value)) {
+			while (matcher.find()) {
+				// Group 1:  [+-] {real} [+-] {imaginary}
+				if(matcher.group(1) != null) {
+					real = Double.parseDouble(matcher.group(2));
+					imaginary = Double.parseDouble(matcher.group(3).replaceAll("[ij]", ""));
+				}
+				// Group 4:  [+-] {real} [+-] {imaginary}
+				if(matcher.group(4) != null) {
+					real = Double.parseDouble(matcher.group(5));
+					imaginary = Double.parseDouble(matcher.group(6).replaceAll("[ij]", ""));
+				}
+				// Group 7:  [+-] {imaginary} [+-] {real} 
+				if(matcher.group(7) != null) {
+					imaginary = Double.parseDouble(matcher.group(8).replaceAll("[ij]", ""));
+					real = Double.parseDouble(matcher.group(9));
+				}
+				// Group 10:  [+-] {imaginary} [+-] {real} 
+				if(matcher.group(10) != null) {
+					imaginary = Double.parseDouble(matcher.group(11).replaceAll("[ij]", ""));
+					real = Double.parseDouble(matcher.group(12));
+				}
+				// Group 13: =  [+-] {imaginary}
+				if(matcher.group(13) != null) 
+					imaginary = Double.parseDouble(matcher.group(13).replaceAll("[ij]", ""));
+				
+				// Group 14:  [+-] {imaginary}
+				if(matcher.group(14) != null) 
+					imaginary = Double.parseDouble(matcher.group(14).replaceAll("[ij]", ""));
+				
+				// Group 15:  [+-] {real} 
+				if(matcher.group(15) != null) 
+					real = Double.parseDouble(matcher.group(15));
+			  }
+		  }	else 
+			  throwIAE(value + " is NOT a valid cartesian notation !");
+		
+		// Turns doubles into normalizes string
+		// Apache Commons Math Complex only accepts doubles with commas and the major "e" decimal notation
 		if(imaginary.toString().startsWith("-")) {
 			result = (real.toString() + " " + imaginary.toString().replaceFirst("-", "- ") + "i");
 		} else {
-			result = (real.toString() + " + " +  imaginary.toString().replace("+", "") + "i");
+			result = (real.toString()+ " + " +  imaginary.toString().replace("+", "") + "i");
 		}
-		
+				
+		// Output example : "1.0E5 - 7.555i"
 		return result;
 		  
 	}
@@ -253,7 +322,50 @@ public class ComplexDatatypeUtil {
 	 * @throws IllegalArgumentException If one of the supplied strings is not a legal polar.
 	 */
 	public static String normalizePolar(String value) {
-		return parsePolar(value).toString();
+		double r = 0.0;
+		double theta = 0.0; // in radians
+		String result = "";
+		
+		value = value.replaceAll("\\p{Space}+", "");
+		
+		Pattern pattern = Pattern.compile(polar);
+		Matcher matcher = pattern.matcher(value);
+		
+		// Separates module and angle parts of the string into doubles
+		if (Pattern.matches(polar, value)) {
+			while (matcher.find()) {
+				r = Double.parseDouble(matcher.group(1));
+			
+			if(matcher.group(3).contains("[rad]") && matcher.group(3).contains("[pi]")) {
+				theta = Double.parseDouble(matcher.group(2));
+				theta = theta * FastMath.PI;
+			} else if (matcher.group(3).contains("[rad]") && !matcher.group(3).contains("[pi]")) {
+				theta = Double.parseDouble(matcher.group(2));
+			} else if(matcher.group(3).contains("[deg]") && !matcher.group(3).contains("[pi]")) {
+				// Transforms degrees in radians
+				theta = Double.parseDouble(matcher.group(2));
+				theta = Math.toRadians(theta);
+			} else {
+				throwIAE(value + " is NOT a valid cartesian notation !");
+				}
+			}
+		} else 
+			throwIAE(value + " is NOT a valid cartesian notation !");
+		
+		Complex complex = ComplexUtils.polar2Complex(r, theta);
+		
+		String real = Double.toString(complex.getReal());
+		String imaginary = Double.toString(complex.getImaginary());
+		
+		// Turns doubles into normalizes string
+		// Apache Commons Math Complex only accepts doubles with commas and the major "e" decimal notation
+		if(imaginary.toString().startsWith("-")) {
+			result = (real.toString() + " " + imaginary.toString().replaceFirst("-", "- ") + "i");
+		} else {
+			result = (real.toString()+ " + " +  imaginary.toString().replace("+", "") + "i");
+		}
+		
+		return result;
 	}
 	
 	/*---------------*
@@ -289,72 +401,10 @@ public class ComplexDatatypeUtil {
 	 * @throws NumberFormatException If the supplied string is not a valid complex cartesian notation.
 	 */
 	public static Complex parseCartesian(String value) {
-		Double re = 0.0;
-		Double im = 0.0;
+		ComplexFormat format = ComplexFormat.getInstance(new Locale("en"));
+		Complex complex = format.parse(normalizeCartesian(value));
 		
-		value = value.replaceAll("\\p{Space}+", "");
-		
-		// Groups of decimals
-		final String real = "\\p{Digit}+(?:\\.\\p{Digit}*)?(?:[eE][+-]?\\p{Digit}+)?";
-		final String imaginary = "\\p{Digit}+(?:\\.\\p{Digit}*)?(?:[eE][+-]?\\p{Digit}+)?";
-		
-		// RegEx to cartesian complex notations
-		final String cartesian = 
-				// Cartesian notations accepted
-				("(([+-]?" + real + ")" + "([+-]" + imaginary + "[ij]))|" +	// ex : -7 + 4j
-				"(([+-]?" + real + ")" + "([+-][ij]" + imaginary + "))|" +	// ex : -7 + i4
-				"(([+-]?[ij]" + imaginary + ")" + "([+-]" + real + "))|" +	// ex : i4 - 7
-				"(([+-]?" + imaginary + "[ij])" + "([+-]" + real + "))|" +	// ex : 4j - 7
-				
-				// Pure imaginary number
-				"([+-]?[ij]" + imaginary + ")|" + 
-				"([+-]?" + imaginary + "[ij])|" + 
-				
-				// Pure real number
-				"([+-]?" + real + ")"); 
-		
-		Pattern pattern = Pattern.compile(cartesian);
-		Matcher matcher = pattern.matcher(value);
-		
-		// Separates real and imaginary parts of the string into doubles
-		if (Pattern.matches(cartesian, value)) {
-			while (matcher.find()) {
-				// Group 1:  [+-] {real} [+-] {imaginary}
-				if(matcher.group(1) != null) {
-					re = Double.parseDouble(matcher.group(2));
-					im = Double.parseDouble(matcher.group(3).replaceAll("[ij]", ""));
-				}
-				// Group 4:  [+-] {real} [+-] {imaginary}
-				if(matcher.group(4) != null) {
-					re = Double.parseDouble(matcher.group(5));
-					im = Double.parseDouble(matcher.group(6).replaceAll("[ij]", ""));
-				}
-				// Group 7:  [+-] {imaginary} [+-] {real} 
-				if(matcher.group(7) != null) {
-					im = Double.parseDouble(matcher.group(8).replaceAll("[ij]", ""));
-					re = Double.parseDouble(matcher.group(9));
-				}
-				// Group 10:  [+-] {imaginary} [+-] {real} 
-				if(matcher.group(10) != null) {
-					im = Double.parseDouble(matcher.group(11).replaceAll("[ij]", ""));
-					re = Double.parseDouble(matcher.group(12));
-				}
-				// Group 13: =  [+-] {imaginary}
-				if(matcher.group(13) != null) 
-					im = Double.parseDouble(matcher.group(13).replaceAll("[ij]", ""));
-				
-				// Group 14:  [+-] {imaginary}
-				if(matcher.group(14) != null) 
-					im = Double.parseDouble(matcher.group(14).replaceAll("[ij]", ""));
-				
-				// Group 15:  [+-] {real} 
-				if(matcher.group(15) != null) 
-					re = Double.parseDouble(matcher.group(15));
-			  }
-		  }	else 
-			  throwIAE(value + " is NOT a valid cartesian notation !");
-		
-		return new Complex(re, im);
+		return complex;
 	}
 	
 	/**
@@ -365,50 +415,16 @@ public class ComplexDatatypeUtil {
 	 * @throws NumberFormatException If the supplied string is not a valid complex polar notation.
 	 */
 	public static Complex parsePolar(String value) {
-		double r = 0.0;
-		double theta = 0.0; // in radians
+		ComplexFormat format = ComplexFormat.getInstance(new Locale("en"));
+		Complex complex = format.parse(normalizePolar(value));
 		
-		value = value.replaceAll("\\p{Space}+", "");
-		
-		// Groups of decimals
-		final String module = "\\p{Digit}+(?:\\.\\p{Digit}*)?(?:[eE][+-]?\\p{Digit}+)?";
-		final String angle = "\\p{Digit}+(?:\\.\\p{Digit}*)?(?:[eE][+-]?\\p{Digit}+)?";
-		
-		// RegEx to polar complex notations
-		final String polar = "\\((" + module + ")[;,]([+-]?" + angle + ")((?:\\[pi\\])?\\[(?:rad|deg)\\])\\)";
-		
-		Pattern pattern = Pattern.compile(polar);
-		Matcher matcher = pattern.matcher(value);
-		
-		// Separates module and angle parts of the string into doubles
-		if (Pattern.matches(polar, value)) {
-			while (matcher.find()) {
-				r = Double.parseDouble(matcher.group(1));
-			
-			if(matcher.group(3).contains("[rad]") && matcher.group(3).contains("[pi]")) {
-				theta = Double.parseDouble(matcher.group(2));
-				theta = theta * FastMath.PI;
-			} else if (matcher.group(3).contains("[rad]") && !matcher.group(3).contains("[pi]")) {
-				theta = Double.parseDouble(matcher.group(2));
-			} else if(matcher.group(3).contains("[deg]") && !matcher.group(3).contains("[pi]")) {
-				// Transforms degrees in radians
-				theta = Double.parseDouble(matcher.group(2));
-				theta = Math.toRadians(theta);
-			} else {
-				throwIAE(value + " is NOT a valid cartesian notation !");
-				}
-			}
-		} else 
-			throwIAE(value + " is NOT a valid cartesian notation !");
-		
-		return ComplexUtils.polar2Complex(r, theta);
+		return complex;
 	}
 
 
 	/*------------------*
 	 * Value comparison *
 	 *------------------*/
-
 	
 	public static boolean compare(String value1, String value2, IRI datatype) {
 		if (datatype.equals(CDT.COMPLEX) || datatype.equals(CDT.COMPLEXCARTESIAN) || datatype.equals(CDT.COMPLEXPOLAR))
